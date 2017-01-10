@@ -1,0 +1,29 @@
+import requests
+import json
+import pytest
+import unittest
+
+def json_test_login(user,password):
+    body={"user":user,"password":password}
+    resp = requests.post('http://192.168.11.150/cgi-bin/luci/login', json=body)	
+    if resp.status_code == 200:
+        json_ret=format(resp.json())
+        #return json_ret
+        str_set=resp.json()['message']
+    if  str_set.encode('ascii','ignore')=='success':
+	    return True
+ 
+#print(json_test_login("root","root1234"))
+
+class Test_json_test_login(unittest.TestCase):
+
+    def test_json_test_login(self):
+	    #self.assertTrue("root","root1234")
+	    self.assertTrue("root","rsfsfsfssfso")
+    
+	#assert json_test_login("root","root1234")==True
+    #assert json_test_login("root","root1")==True
+         
+
+if __name__ == '__main__':
+    unittest.main()
