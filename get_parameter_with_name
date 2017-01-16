@@ -1,0 +1,37 @@
+import numpy as np
+
+file = open('ap.txt', 'r')
+copy_file = file.read()
+#myarray = np.asarray(copy_file)
+x = copy_file.split()
+
+def get_next_config_index(start_indx):
+    for i in range(start_indx,len(x)):
+       # print "i >>", i, "x[i]: ",x[i]
+        if x[i]=="config":
+            return i
+
+    return -1
+
+def get_parameter_with_name(first_name,sec_name):
+
+
+ tmp1 = x.index(first_name)
+ tmp2 = get_next_config_index(tmp1)
+ #print(x[5])
+ #print(">>", x.index("'wan3'"))
+ #print(">>", tmp2)
+
+ if get_next_config_index(tmp1) != -1 :
+    for j in xrange(tmp1, tmp2):
+        if x[j]==sec_name:
+            return x[j+1]
+   
+ else:
+    for j in xrange(tmp1, len(x)):
+        if x[j]==sec_name:
+            return x[j+1]
+   
+
+print(get_parameter_with_name("'wan3'",'proto'))
+print(get_parameter_with_name("'wan6'",'proto'))
