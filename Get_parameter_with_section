@@ -1,0 +1,35 @@
+import numpy as np
+
+file = open('ap.txt', 'r')
+#find_section="switch_vlan"
+#find_section_field="ports"
+copy_file = file.read()
+myarray = np.asarray(copy_file)
+x = copy_file.split()
+
+def get_value(find_section_field,start_indx,end_indx):
+    for j in xrange(start_indx, end_indx):
+        if x[j]==find_section_field:
+            #print(x[j+1])
+            return x[j+1]
+    return -1
+
+
+
+def get_next_config_index(start_indx):
+    for i in range(start_indx,len(x)):
+        if x[i]=="config":
+            return i
+    return len(x)
+	
+def get_parameter_with_section(find_section,find_section_field):
+
+ for i in range(0,len(x)):
+     if x[i]==find_section:
+         tmp1 = i
+         tmp2 = get_next_config_index(tmp1)
+         val=get_value(find_section_field,tmp1,tmp2)
+         i=tmp2
+	 return val
+
+print(get_parameter_with_section("switch","name"))	 
