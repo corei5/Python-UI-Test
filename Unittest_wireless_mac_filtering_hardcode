@@ -1,0 +1,72 @@
+import numpy as np
+import requests
+import json
+import pytest
+import unittest
+
+file = open('ap.txt', 'r')
+copy_file = file.read()
+myarray = np.asarray(copy_file)
+x = copy_file.split()
+
+def get_value(find_section_field,start_indx,end_indx):
+    for j in xrange(start_indx, end_indx):
+        if x[j]==find_section_field:
+            return x[j+1]
+    return -1
+ 
+def get_next_config_index(start_indx):
+    for i in range(start_indx,len(x)):
+        if x[i]=="config":
+            return i
+    return len(x)
+
+def get_parameter_with_section(find_section,find_section_field):
+ for i in range(0,len(x)):
+     if x[i]==find_section:
+         tmp1 = i
+         tmp2 = get_next_config_index(tmp1)
+         val=get_value(find_section_field,tmp1,tmp2)
+         i=tmp2
+ return val
+
+def json_test_login(user,password):
+    str_set=("encode")
+    body={"user":user,"password":password}
+    resp = requests.post('http://192.168.11.150/cgi-bin/luci/login', json=body)
+    if resp.status_code == 200:
+        json_ret=format(resp.json())
+        str_set=resp.json()
+        return str_set
+
+def json_test_wireless(sid):
+    payload = {'cbid.wireless.cfg033579.macfilter':'deny','cbid.wireless.cfg033579.maclist':'00:00:00:00:00:00','cbi.submit':1}
+    #print("payload: ",payload)
+    url = 'http://192.168.11.150/cgi-bin/luci/admin/wireless/wireless-mac-filtering'
+    headers = {'Cookie': 'sysauth='+sid,
+           'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.get(url, headers=headers, params=payload)
+    #print("r.text:",r.text)
+    return r.text
+
+#print("Trying to log in....")
+resp=json_test_login("root","root1234")
+#print("Login Done.")
+#print("Trying to access wireless")
+#print(json_test_wireless(resp["sid"]))
+#print(get_parameter_with_section("wifi-iface","maclist")) 
+json_test_wireless(resp["sid"])
+tmp=get_parameter_with_section("wifi-iface","macfilter")
+#print("config data:",tmp)
+
+
+def pytest(config_value,parameter_with_section):
+    return get_parameter_with_section(config_value,parameter_with_section)
+
+def test_pytest():
+    #assert(pytest("wifi-iface","ssid"),"'aplrouter_raihan1'")==True
+    assert(pytest("wifi-iface","macfilter") == "'deny'")
+    assert(pytest("wifi-iface","maclist") == "'00:00:00:00:00:00'")
+    
+	
