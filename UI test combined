@@ -1,0 +1,139 @@
+import numpy as np
+import requests
+import json
+import pytest
+import unittest
+
+file = open('ap.txt', 'r')
+copy_file = file.read()
+myarray = np.asarray(copy_file)
+x = copy_file.split()
+
+def get_value(find_section_field,start_indx,end_indx):
+    for j in xrange(start_indx, end_indx):
+        if x[j]==find_section_field:
+            return x[j+1]
+    return -1
+ 
+def get_next_config_index(start_indx):
+    for i in range(start_indx,len(x)):
+        if x[i]=="config":
+            return i
+    return len(x)
+
+def get_parameter_with_section(find_section,find_section_field):
+ for i in range(0,len(x)):
+     if x[i]==find_section:
+         tmp1 = i
+         tmp2 = get_next_config_index(tmp1)
+         val=get_value(find_section_field,tmp1,tmp2)
+         i=tmp2
+ return val
+
+#loging option
+def json_test_login(user,password):
+    str_set=("encode")
+    body={"user":user,"password":password}
+    resp = requests.post('http://192.168.11.150/cgi-bin/luci/login', json=body)
+    if resp.status_code == 200:
+        json_ret=format(resp.json())
+        str_set=resp.json()
+        return str_set
+
+#wireless setting		
+def json_test_wireless_setting(sid):
+    payload = {'radio':'0','ssid':'aplrouter_raihan1','region':'Bangladesh','mode':'11g','htmode':'auto','channel':'5','security_value':'root1234','encryption':'none','cbi.next':1}
+    url = 'http://192.168.11.150/cgi-bin/luci/admin/wireless/wireless-setting'
+    headers = {'Cookie': 'sysauth='+sid,
+           'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.get(url, headers=headers, params=payload)
+    return r.text
+		
+#wireless security		
+def json_test_wireless_security(sid):
+    payload = {'cbid.wireless.cfg033579.wireless_security':'personal','wep_key_type1':'disabled','wep_key_type2':'disabled','wep_key_type3':'disabled','wep_key_type4':'disabled','cbid.wireless.cfg033579.p_version':'automatic','cbid.wireless.cfg033579.p_encryption':'automatic','cbid.wireless.cfg033579.p_password':'74836857','cbid.wireless.cfg033579.p_period':'0','cbi.submit':1,'cbi.apply':'Save+%26+Apply'}
+    #payload="token=06831da23fd23e4c8dce5367a9998826&cbi.submit=1&cbid.wireless.cfg033579.wireless_security=personal&wep_key_type1=disabled&wep_key_type2=disabled&wep_key_type3=disabled&wep_key_type4=disabled&cbid.wireless.cfg033579.p_version=automatic&cbid.wireless.cfg033579.p_encryption=automatic&cbid.wireless.cfg033579.p_password=74836857&cbid.wireless.cfg033579.p_period=0&cbi.apply=Save+%26+Apply"
+	#print("cbi.submit: ",sid)
+    #exit
+    url = 'http://192.168.11.150/cgi-bin/luci/admin/wireless/wireless-security'
+    headers = {'Cookie': 'sysauth='+sid,
+           'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.get(url, headers=headers, params=payload)
+    #params=payload
+    #print("params:",params)
+    return r.text
+
+#wireless mac filtering	
+def json_test_wireless_mac_filtering(sid):
+    payload = {'cbid.wireless.cfg033579.macfilter':'deny','cbid.wireless.cfg033579.maclist':'00:00:00:00:00:00','cbi.submit':1}
+    #print("payload: ",payload)
+    url = 'http://192.168.11.150/cgi-bin/luci/admin/wireless/wireless-mac-filtering'
+    headers = {'Cookie': 'sysauth='+sid,
+           'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.get(url, headers=headers, params=payload)
+    #print("r.text:",r.text)
+    return r.text
+
+#wireless  advanced	
+def json_test_wireless_advanced(sid):
+    payload = {'cbid.wireless.cfg033579.macfilter':'deny','cbid.wireless.cfg033579.maclist':'00:00:00:00:00:00','cbi.submit':1}
+    #print("payload: ",payload)
+    url = 'http://192.168.11.150/cgi-bin/luci//admin/wireless/wireless-advanced'
+    headers = {'Cookie': 'sysauth='+sid,
+           'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.get(url, headers=headers, params=payload)
+    #print("r.text:",r.text)
+    return r.text	
+	
+
+#wireless DHCP Settings
+def json_test_dhcp_setting(sid):
+    payload = {'proto':'dhcp','start':'99','limit':'152','leasetime':'12h','dhcp_option':'192.68.1.1','domain':'Default Domain','dns':'Primary DNS','dns':'Secondary DNS','cbi.next':1}
+    #print("payload: ",payload)
+    url = 'http://192.168.11.150/cgi-bin/luci/admin/dhcp#section1'
+    headers = {'Cookie': 'sysauth='+sid,
+           'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.get(url, headers=headers, params=payload)
+    #print("r.text:",r.text)
+    return r.text
+	
+#wireless DHCP address reservation add new
+def json_test_dhcp_address_reservation_add_new(sid):
+    payload = {'cbid.dhcp.cfg07fe63.name':'Rabby','cbid.dhcp.cfg07fe63.mac':'a4:db:30:99:11:19','cbid.dhcp.cfg07fe63.ip':'192.168.11.114','cbid.dhcp.cfg07fe63.hostid':'abcd','cbi.submit':'1'}
+    url = 'http://192.168.11.150/cgi-bin/luci/admin/dhcp/dhcp-address-reservation-add-new'
+    headers = {'Cookie': 'sysauth='+sid,
+           'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.get(url, headers=headers, params=payload)
+    #print("r.text:",r.text)
+    return r.text	
+	
+print("Trying to log in....")
+resp=json_test_login("root","root1234")
+print("Login Done.")
+print("Trying to access wireless")
+#print(json_test_wireless(resp["sid"]))
+#print(get_parameter_with_section("wifi-iface","maclist")) 
+json_test_wireless_security(resp["sid"])
+json_test_wireless_mac_filtering(resp["sid"])
+json_test_wireless_setting(resp["sid"])
+json_test_dhcp_setting(resp["sid"])
+json_test_dhcp_address_reservation_add_new(resp["sid"])
+tmp=get_parameter_with_section("wifi-iface","macfilter")
+#print("config data:",tmp)
+
+"""
+def pytest(config_value,parameter_with_section):
+    return get_parameter_with_section(config_value,parameter_with_section)
+
+def test_pytest():
+    #assert(pytest("wifi-iface","ssid"),"'aplrouter_raihan1'")==True
+    assert(pytest("wifi-iface","macfilter") == "'allow'")
+    assert(pytest("wifi-iface","maclist") == "'00:00:00:00:00:00'")
+   """ 
+	
