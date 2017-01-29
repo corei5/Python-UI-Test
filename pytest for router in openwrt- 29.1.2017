@@ -1,0 +1,387 @@
+import numpy as np
+import requests
+import json
+import pytest
+import unittest
+import urllib
+
+# file = open('ap.txt', 'r')
+# copy_file = file.read()
+# myarray = np.asarray(copy_file)
+x = ""
+
+ext_call = 0
+ext_port = ""
+if ext_call == 1:
+    ext_port = ":23231"
+
+
+def get_value(find_section_field, start_indx, end_indx):
+    global x
+    for j in xrange(start_indx, end_indx):
+        if x[j] == find_section_field:
+            return x[j + 1]
+    return -1
+
+
+def get_next_config_index(start_indx):
+    global x
+    for i in range(start_indx, len(x)):
+        if x[i] == "config":
+            return i
+    return len(x)
+
+
+def get_parameter_with_section(config_file, find_section, find_section_field, expected_value):
+    global x
+    file = open('config/' + config_file, 'r')
+    copy_file = file.read()
+    myarray = np.asarray(copy_file)
+    x = copy_file.split()
+
+    for i in range(0, len(x)):
+        # print ("x[i]:",x[i],"find_section:",find_section)
+
+        if x[i] == find_section:
+            tmp1 = i
+            tmp2 = get_next_config_index(tmp1)
+            i = tmp2
+            val = get_value(find_section_field, tmp1, tmp2)
+            if val == expected_value:
+                return True
+    return False
+
+
+# loging option
+def json_test_login(user, password):
+    str_set = ("encode")
+    body = {"user": user, "password": password}
+    resp = requests.post('http://192.168.11.150' + ext_port + '/cgi-bin/luci/login', json=body)
+    if resp.status_code == 200:
+        json_ret = format(resp.json())
+        str_set = resp.json()
+        return str_set
+
+
+# wireless setting
+def json_test_wireless_setting(sid):
+    payload = {
+               "cbi.submit": "1",
+               "radio": "0",
+               "ssid": "aplrouter_raihan",
+               "region": "bd",
+               "mode": "11g",
+               "htmode": "auto",
+               "channel": "9",
+               "encryption": "none",
+               "security_value":"12345",
+               "cbi.apply": "Save & Apply"
+               }
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/wireless/wireless-setting'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    # print("r.text:",r.text)
+    return r.text
+
+# Wireless Security
+def json_test_wireless_security(sid):
+    payload = {
+        "cbi.submit": "1",
+        "cbid.wireless.cfg033579.wireless_security": "personal",
+        "wep_key_type1": "disabled",
+        "wep_key_type2": "disabled",
+        "wep_key_type3": "disabled",
+        "wep_key_type4": "disabled",
+        "cbid.wireless.cfg033579.p_version": "automatic",
+        "cbid.wireless.cfg033579.p_encryption": "automatic",
+        "cbid.wireless.cfg033579.p_password": "74836857",
+        "cbid.wireless.cfg033579.p_period": "0",
+        "cbid.wireless.cfg033579.radius_server_ip": "123456789",
+        "cbid.wireless.cfg033579.radius_port": "1813",
+        "cbid.wireless.cfg033579.radius_pass": "root1234",
+        "cbid.wireless.cfg033579.e_period": "1",
+        "cbi.apply": "Save & Apply"
+    }
+    # print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci//admin/wireless/wireless-security'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    # print("r.text:",r.text)
+    return r.text
+
+
+# wireless mac filtering
+def json_test_wireless_mac_filtering(sid):
+    payload = {
+        "cbi.submit": "1",
+        "tab.wireless.cfg033579": "macfilter",
+        "cbid.wireless.cfg033579.macfilter": "deny",
+        "cbid.wireless.cfg033579.maclist": "74:D4:35:CD:ED:AE",
+        "cbi.apply": "Save & Apply"
+    }
+    # print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/wireless/wireless-mac-filtering'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    # print("r.text:",r.text)
+    return r.text
+
+
+# Wireless Advanced
+def json_test_wireless_advanced(sid):
+    payload = {
+        "cbi.submit": "1",
+        "cbid.wireless.radio1.txpower": "20",
+        "cbid.wireless.radio1.beacon_int": "20000",
+        "cbi.cbe.wireless.radio1.short-gi": "1",
+        "cbid.wireless.cfg033579.rts": "250",
+        "cbid.wireless.cfg033579.frag": "250",
+        "cbid.wireless.cfg033579.dtim_period": "300",
+        "cbi.cbe.wireless.cfg033579.wmm": "1",
+        "cbid.wireless.cfg033579.wmm": "1",
+        "cbi.cbe.wireless.cfg033579.isolate": "1",
+        "cbid.wireless.cfg033579.isolate": "1",
+        "cbi.apply": "Save & Apply"
+    }
+    # print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/wireless/wireless-advanced'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    # print("r.text:",r.text)
+    return r.text
+
+#=================================================================================start from hear ---24.1.2017
+# wireless DHCP Settings
+def json_test_dhcp_setting(sid):
+    payload = (
+                    ("cbi.submit", "1"),
+                    ("proto", "dhcp"),
+                    ("start", "66.220.144.0"),
+                    ("limit", "66.220.159.255"),
+                    ("leasetime", "12h"),
+                    ("dhcp_option", "192.68.1.1"),
+                    ("domain","Facebook.com"),
+                    ("dns", '8.8.8.8'),
+                    ("dns", '1.2.3.4'),
+                    #"dns": "8.8.4.5",
+                    ("cbi.apply","Save & Apply")
+                    #"cbi.next": "Save"
+                 )
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci//admin/dhcp#section1'
+    # print("Connecting "+url+"...")Secondary DNS
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=payload)
+    #print("r.text:",r.text)
+    return r.text
+
+# DHCP Reservation Modify(wireless DHCP address reservation add new)
+def json_test_dhcp_address_reservation_add_new(sid):
+    payload = {
+        "cbi.submit": "1",
+        "cbid.dhcp.cfg07fe63.name": "BCPSC",
+        "cbid.dhcp.cfg07fe63.mac": "01:22:64:76:aa:18",
+        "cbid.dhcp.cfg07fe63.ip": "10.11.12.20",
+        "cbid.dhcp.cfg07fe63.hostid": "vpn",
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/dhcp/dhcp-address-reservation-add-new'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+#=============================================================start from hear ---26.1.2017
+#8.Add or Modify Port Forwarding Entry(Forwarding)
+def json_test_port_forwarding_add_new(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "name": "test5",
+        "proto": "icmp",
+        "src_dport": "9000",
+        "dest_port": "10000",
+        "ipaddr": "131.15.21.90",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/forwarding/port-forwarding-add-new'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+#=============================================================start from hear ---29.1.2017
+#9.Port Triggering(Forwarding)------------------need to talk with raihan vai for chake box value
+
+
+
+
+
+
+
+#10.Firewall Port Triggering ADD NEW(Forwarding)
+def json_test_forwarding_port_triggering_add_new(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "_trigger.name": "port_triggering",
+        "_trigger.port": "47624",
+        "_trigger.proto": "tcp",
+        "_trigger.src": "wan",
+        "_trigger.macaddr": "00:a0:24:5a:33:69",
+        "_trigger.ipaddr": "192.168.1.370",
+        "_trigger.extipaddr": "192.168.1.200",
+        "_trigger.extport": "2186",
+        "_incoming.dest": "wan",
+        "_trigger.inipaddr": "192.168.1.201",
+        "_incoming.port": "2300-2400",
+        "status": "1",
+        "commonport": "1",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/forwarding/forwarding-port-triggering-add-new'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+
+#=============================================================start from hear ---30.1.2017
+
+
+
+
+
+
+
+
+
+
+
+print("Trying to log in....")
+resp = json_test_login("root", "root1234")
+print("Login Done.")
+print("Trying to access wireless")
+
+json_test_wireless_setting(resp["sid"])#def test_wireless_settings():
+json_test_wireless_security(resp["sid"])#def test_wireless_security():
+json_test_wireless_mac_filtering(resp["sid"])#def test_wireless_mac_filtering():
+json_test_wireless_advanced(resp["sid"])#def test_wireless_advanced():
+json_test_dhcp_setting(resp["sid"])#def test_dhcp_setting():
+json_test_dhcp_address_reservation_add_new(resp["sid"])#def test_dhcp_address_reservation_add_new():
+json_test_port_forwarding_add_new(resp["sid"]) #def test_port_forwarding_add_new():
+json_test_forwarding_port_triggering_add_new(resp["sid"]) #def test_forwarding_port_triggering_add_new():
+
+
+
+def pytest(config_file, config_value, parameter_with_section, expected_value):
+    return get_parameter_with_section(config_file, config_value, parameter_with_section, expected_value)
+
+def test_wireless_settings():
+    assert (pytest("wireless", "wifi-iface", "ssid", "'aplrouter_raihan'") == True)
+    assert (pytest("wireless", "wifi-device", "country", "'bd'") == True)
+    assert (pytest("wireless", "wifi-device", "hwmode", "'11g'") == True)
+    assert (pytest("wireless", "wifi-device", "htmode", "'auto'") == True)
+    assert (pytest("wireless", "wifi-device", "channel", "'9'") == True)
+    #assert (pytest("wireless", "wifi-iface", "key", "'root1234'") == True)
+
+def test_wireless_security():
+    assert (pytest("wireless", "wifi-iface", "wireless_security", "'personal'") == True)
+    assert (pytest("wireless", "wifi-iface", "p_version", "'automatic'") == True)
+    assert (pytest("wireless", "wifi-iface", "p_encryption", "'automatic'") == True)
+    assert (pytest("wireless", "wifi-iface", "p_period", "'0'") == True)
+    #assert (pytest("wireless", "wifi-iface", "radius_server_ip", "'123456789'") == True)
+    assert (pytest("wireless", "wifi-iface", "radius_port", "'1813'") == True)
+    assert (pytest("wireless", "wifi-iface", "radius_pass", "'root1234'") == True)
+    assert (pytest("wireless", "wifi-iface", "e_period", "'1'") == True)
+
+def test_wireless_mac_filtering():
+    assert (pytest("wireless", "wifi-iface", "macfilter", "'deny'") == True)
+    assert (pytest("wireless", "wifi-iface", "maclist", "'74:D4:35:CD:ED:AE'") == True)
+
+def test_wireless_advanced():
+    assert (pytest("wireless", "wifi-device", "txpower", "'20'") == True)
+    assert (pytest("wireless", "wifi-device", "beacon_int", "'20000'") == True)
+    assert (pytest("wireless", "wifi-iface", "dtim_period", "'300'") == True)
+    assert (pytest("wireless", "wifi-iface", "rts", "'250'") == True)
+    assert (pytest("wireless", "wifi-iface", "frag", "'250'") == True)
+    assert (pytest("wireless", "wifi-iface", "wmm", "'1'") == True)
+    assert (pytest("wireless", "wifi-iface", "isolate", "'1'") == True)
+#============================================================================================
+# dns found same name so it stop fast ,it need to fix on 26.1.2017
+def test_dhcp_setting():
+    assert (pytest("dhcp", "dhcp", "proto", "'dhcp'") == True)
+    assert (pytest("dhcp", "dhcp", "start", "'66.220.144.0'") == True)
+    assert (pytest("dhcp", "dhcp", "limit", "'66.220.159.255'") == True)
+    assert (pytest("dhcp", "dhcp", "leasetime", "'12h'") == True)
+    assert (pytest("dhcp", "dhcp", "dhcp_option", "'192.68.1.1'") == True)
+    assert (pytest("dhcp", "dhcp", "domain", "'Facebook.com'") == True)
+    assert (pytest("dhcp", "dhcp", "dns", "'8.8.8.8'") == True)
+    #assert (pytest("dhcp", "dhcp", "dns", "'1.2.3.4'") == True)
+#===============================================================================================
+def test_dhcp_address_reservation_add_new():
+    assert (pytest("dhcp", "host", "ip", "'10.11.12.20'") == True)
+    assert (pytest("dhcp", "host", "hostid", "'vpn'") == True)
+    assert (pytest("dhcp", "host", "name", "'BCPSC'") == True)
+    assert (pytest("dhcp", "host", "mac", "'01:22:64:76:aa:18'") == True)
+
+
+def test_port_forwarding_add_new():
+    assert (pytest("firewall", "redirect", "name", "'test5'") == True)
+    assert (pytest("firewall", "redirect", "proto", "'icmp'") == True)
+    assert (pytest("firewall", "redirect", "src_dport", "'9000'") == True)
+    assert (pytest("firewall", "redirect", "dest_port", "'10000'") == True)
+    assert (pytest("firewall", "redirect", "ipaddr", "'131.15.21.90'") == True)
+
+
+def test_forwarding_port_triggering_add_new():
+    assert (pytest("firewall", "redirect", "module", "'port_triggering'") == True)
+    assert (pytest("firewall", "redirect", "proto", "'tcp'") == True)
+    assert (pytest("firewall", "redirect", "src_dport", "'2186'") == True)
+    assert (pytest("firewall", "redirect", "dest_ip", "'192.168.1.201'") == True)
+    assert (pytest("firewall", "redirect", "status", "'1'") == True)
+    assert (pytest("firewall", "redirect", "dest", "'wan'") == True)
+    assert (pytest("firewall", "redirect", "dest_port", "'2300-2400'") == True)
+    assert (pytest("firewall", "redirect", "src", "'wan'") == True)
+    assert (pytest("firewall", "redirect", "section", "'redirect'") == True)
+    assert (pytest("firewall", "redirect", "target", "'DNAT'") == True)
+    assert (pytest("firewall", "redirect", "src_dip", "'192.168.1.200'") == True)
+    assert (pytest("firewall", "redirect", "src_ip", "'192.168.1.230'") == True)
+    assert (pytest("firewall", "redirect", "src_mac", "'00:a0:24:5a:33:69'") == True)
+    assert (pytest("firewall", "redirect", "src_port", "'47624'") == True)
+
+
+
+
+
