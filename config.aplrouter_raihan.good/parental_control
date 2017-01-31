@@ -1,0 +1,31 @@
+
+config data 'main'
+	option mac_id 'A4:DB:30:99:11:19'
+	option control_option '0'
+
+config list
+	option child_mac_id 'Child mac add'
+	option mac_id 'Macc add'
+	option web_desc 'sample web desc'
+	list web_name 'yahoo.com'
+	list web_name ''
+	list web_name ''
+	list web_name ''
+	list web_name ''
+	list web_name ''
+	list web_name ''
+	list web_name ''
+	option effective_time 'any'
+	option status 'enabled'
+
+config list
+	list web_name ''
+	list web_name ''
+	list web_name ''
+	list web_name ''
+	list web_name ''
+	list web_name ''
+	list web_name ''
+	option effective_time 'any'
+	option status 'enabled'
+

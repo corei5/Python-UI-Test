@@ -1,0 +1,72 @@
+
+config interface 'test'
+	option ifname 'eth0.2'
+	option _orig_ifname 'eth0.2'
+	option _orig_bridge 'false'
+	option proto 'static'
+	option ipaddr '192.168.11.150'
+	option netmask '255.255.255.0'
+	option gateway '192.168.11.1'
+	option dns '8.8.8.8'
+
+config interface 'loopback'
+	option ifname 'lo'
+	option proto 'static'
+	option ipaddr '127.0.0.1'
+	option netmask '255.0.0.0'
+
+config globals 'globals'
+	option ula_prefix 'fd61:2bde:c2d9::/48'
+
+config interface 'lan'
+	option _orig_ifname 'eth0.1 radio0.network1 wlan0'
+	option _orig_bridge 'true'
+	option ifname 'eth0.1'
+	option type 'bridge'
+	option proto 'dhcp'
+
+config interface 'wan'
+	option ifname 'eth0.2'
+	option _orig_ifname 'eth0.2'
+	option _orig_bridge 'false'
+	option proto 'static'
+	option ipaddr '192.168.11.150'
+	option netmask '255.255.255.0'
+	option gateway '192.168.11.1'
+	option dns '8.8.8.8'
+
+config interface 'wan6'
+	option ifname 'eth0.2'
+	option _orig_ifname 'eth0.2'
+	option _orig_bridge 'false'
+	option proto 'dhcp'
+
+config switch
+	option name 'switch0'
+	option reset '1'
+	option enable_vlan '1'
+
+config switch_vlan
+	option device 'switch0'
+	option vlan '1'
+	option ports '0 1 2 3 6t'
+
+config switch_vlan
+	option device 'switch0'
+	option vlan '2'
+	option ports '4 6t'
+
+config interface 'wan2'
+	option proto '3g'
+	option metric '20'
+	option service 'evdo'
+	option username 'waps'
+	option password 'waps'
+	option device '/dev/ttyUSB0'
+	option dialnumber '#777'
+
+config interface 'wan3'
+	option proto 'dhcp'
+	option ifname 'eth1'
+	option metric '21'
+

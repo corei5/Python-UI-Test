@@ -1,0 +1,19 @@
+
+config wifi-device 'radio1'
+	option type 'mac80211'
+	option channel '11'
+	option hwmode '11n'
+	option path '10180000.wmac'
+	option htmode 'HT20'
+	option txpower '20'
+	option country '00'
+
+config wifi-iface
+	option device 'radio1'
+	option network 'lan'
+	option mode 'ap'
+	option encryption 'psk2'
+	option key 'root1234'
+	option ssid 'aplrouter_raihan'
+
+

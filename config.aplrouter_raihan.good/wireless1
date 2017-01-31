@@ -1,0 +1,41 @@
+
+config wifi-device 'radio0'
+	option type 'mac80211'
+	option channel '36'
+	option hwmode '11a'
+	option path 'pci0000:00/0000:00:00.0/0000:01:00.0'
+	option htmode 'VHT80'
+	option disabled '1'
+
+config wifi-iface
+	option device 'radio0'
+	option mode 'ap'
+	option ssid 'OpenWrt'
+	option encryption 'none'
+	option network 'lan'
+
+config wifi-device 'radio1'
+	option type 'mac80211'
+	option path 'pci0000:00/0000:00:00.0/0000:01:00.0'
+	option htmode 'HT40'
+	option txpower '40'
+	option enable_ssid_broadcast '1'
+	option enable_wireless_router_radio '0'
+	option region 'Albania'
+	option mode '4'
+	option chanWidth '2'
+	option ssid '1'
+	list maclist '64:09:80:74:80:97'
+	option hwmode '11bgn'
+	option channel '11'
+	option status 'disable'
+	option country 'bd'
+
+config wifi-iface
+	option device 'radio1'
+	option mode 'ap'
+	option ssid 'OpenWrt'
+	option network 'lan'
+	option security '0'
+	option encryption 'psk2'
+

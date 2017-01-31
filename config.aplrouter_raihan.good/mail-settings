@@ -1,0 +1,11 @@
+
+config mail 'settings'
+	option from 'from'
+	option to 'to'
+	option smtpserver 'SMTP SERVER'
+	option username 'username'
+	option password 'password'
+	option automail '1'
+	option automail_duration '18:00'
+	option authentication '1'
+

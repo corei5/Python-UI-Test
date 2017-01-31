@@ -1,0 +1,9 @@
+
+config smarthome 'mqtt'
+	option userid 'root'
+	option password '123'
+	list topics 'tt,1,1'
+	list topics 'abc,1,1'
+	list topics 'abcd,1,0'
+
+config smarthome 'mqtt'config smarthome 'mqtt'config smarthome 'mqtt'

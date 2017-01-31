@@ -1,0 +1,50 @@
+
+config access_control 'general'
+	option enabled '1'
+
+config access_control 'rule'
+	option enable '0'
+	option status 'deny'
+
+config rule
+	option name '55'
+	option host 'host descriptin'
+	list target 'target descriptin'
+	list schedule 'schedule descriptin'
+	option status 'disable'
+
+config rule
+	option name '66'
+	option host 'host descriptin'
+	list target 'target descriptin'
+	list schedule 'schedule descriptin'
+	option status 'enable'
+
+config rule
+	option name '77'
+	option host 'host descriptin'
+	list target 'target descriptin'
+	list schedule 'schedule descriptin'
+	option status 'enable'
+
+config rule
+	option days_option 'First Host'
+
+config target
+	option mode 'ip'
+	option name 'Target Description1'
+	option port_start '25'
+	option port_end 'TargetPort2'
+	option proto 'tcp'
+	list domains ''
+	list domains ''
+	list domains ''
+	option ipaddr_start 'IP Address1'
+	option ipaddr_end 'IP Address2'
+
+config host
+	option mode 'ip'
+	option name 'Target Description2'
+	option ip_start '12'
+	option ip_end '122'
+

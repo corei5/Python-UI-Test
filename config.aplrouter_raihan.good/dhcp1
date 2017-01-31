@@ -1,0 +1,61 @@
+
+config dnsmasq
+	option domainneeded '1'
+	option boguspriv '1'
+	option filterwin2k '0'
+	option localise_queries '1'
+	option rebind_protection '1'
+	option rebind_localhost '1'
+	option local '/lan/'
+	option domain 'lan'
+	option expandhosts '1'
+	option nonegcache '0'
+	option authoritative '1'
+	option readethers '1'
+	option leasefile '/tmp/dhcp.leases'
+	option resolvfile '/tmp/resolv.conf.auto'
+	option localservice '1'
+
+config dhcp 'lan'
+	option interface 'lan'
+	option dhcpv6 'server'
+	option ra 'server'
+	option domain 'google.com'
+	option leasetime '120'
+	option name 'lan'
+	option section 'dhcp'
+	option dhcp_option '192.168.1.1'
+	option proto 'dhcp'
+	option limit '200'
+	list dns '8.8.8.8'
+	list dns ''
+	option start '1000'
+
+config dhcp 'wan'
+	option interface 'wan'
+	option ignore '1'
+
+config odhcpd 'odhcpd'
+	option maindhcp '0'
+	option leasefile '/tmp/hosts/odhcpd'
+	option leasetrigger '/usr/sbin/odhcpd-update'
+
+config arplist 'globals'
+
+config arplist 'global'
+	option status '0'
+	option name 'global'
+	option section 'binding'
+	option arb_binding '0'
+
+config host
+	option name 'abc_hostname'
+	option mac 'a4:db:30:99:11:19'
+	option ip '192.168.11.165'
+
+config binding '___name_0'
+	option binding 'Enabled'
+	option macaddr 'dd2'
+	option ipaddr '255.255.420.420'
+	option section 'binding'
+
