@@ -1,0 +1,1263 @@
+import numpy as np
+import requests
+import json
+import pytest
+import unittest
+import urllib
+config_data = {}
+config_file_name = ""
+
+# file = open('ap.txt', 'r')
+# copy_file = file.read()
+# myarray = np.asarray(copy_file)
+x = ""
+
+ext_call = 0
+ext_port = ""
+if ext_call == 1:
+    ext_port = ":23231"
+
+# def encode_dict(d, codec='utf8'):
+#     ks = d.keys()
+#     for k in ks:
+#         val = d.pop(k)
+#         if isinstance(val, unicode):
+#             val = val.encode(codec)
+#         elif isinstance(val, dict):
+#             val = encode_dict(val, codec)
+#         if isinstance(k, unicode):
+#             k = k.encode(codec)
+#         d[k] = val
+#     return d
+
+def get_value(find_section_field, start_indx, end_indx):
+    global x
+    for j in xrange(start_indx, end_indx):
+        if x[j] == find_section_field:
+            return x[j + 1]
+    return -1
+
+
+def get_next_config_index(start_indx):
+    global x
+    for i in range(start_indx, len(x)):
+        if x[i] == "config":
+            return i
+    return len(x)
+
+
+def get_parameter_with_section(config_file, find_section, find_section_field, expected_value):
+    global x
+    file = open('config/' + config_file, 'r')
+    copy_file = file.read()
+    myarray = np.asarray(copy_file)
+    x = copy_file.split()
+
+    for i in range(0, len(x)):
+        # print ("x[i]:",x[i],"find_section:",find_section)
+
+        if x[i] == find_section:
+            tmp1 = i
+            tmp2 = get_next_config_index(tmp1)
+            i = tmp2
+            val = get_value(find_section_field, tmp1, tmp2)
+            if val == expected_value:
+                return True
+    return False
+
+
+#1.loging option
+def json_test_login(user, password):
+    str_set = ("encode")
+    body = {"user": user, "password": password}
+    resp = requests.post('http://192.168.11.150' + ext_port + '/cgi-bin/luci/login', json=body)
+    if resp.status_code == 200:
+        json_ret = format(resp.json())
+        str_set = resp.json()
+        return str_set
+
+
+#1.Get Configuration from Gateway ======================================================== 30.1.2017
+def json_test_getConfiguration(user, password, config):
+    str_set = ("encode")
+    body = {"user": user, "password": password, "config": config}
+    resp = requests.post('http://192.168.11.150' + ext_port + '/cgi-bin/luci/getConfiguration', json=body)
+    if resp.status_code == 200:
+        json_ret = format(resp.json())
+        str_set = resp.json()
+        return str_set
+
+#2.wireless setting
+def json_test_wireless_setting(sid):
+    payload = {
+               "cbi.submit": "1",
+               "radio": "0",
+               "ssid": "aplrouter_raihan",
+               "region": "bd",
+               "mode": "11g",
+               "htmode": "auto",
+               "channel": "9",
+               "encryption": "none",
+               "security_value":"12345",
+               "cbi.next": "Save & Apply"
+               }
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/wireless/wireless-setting'
+    #print("Connecting "+url+"...")
+    #print("Sid "+sid+"...")
+    #print(urllib.urlencode(payload))
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=payload)
+    #print("r.text:",r.text)
+    return r.text
+
+#3.Wireless Security
+def json_test_wireless_security(sid):
+    payload = {
+        "cbi.submit": "1",
+        "cbid.wireless.cfg033579.wireless_security": "personal",
+        "wep_key_type1": "disabled",
+        "wep_key_type2": "disabled",
+        "wep_key_type3": "disabled",
+        "wep_key_type4": "disabled",
+        "cbid.wireless.cfg033579.p_version": "automatic",
+        "cbid.wireless.cfg033579.p_encryption": "automatic",
+        "cbid.wireless.cfg033579.p_password": "74836857",
+        "cbid.wireless.cfg033579.p_period": "0",
+        "cbid.wireless.cfg033579.radius_server_ip": "123456789",
+        "cbid.wireless.cfg033579.radius_port": "1813",
+        "cbid.wireless.cfg033579.radius_pass": "root1234",
+        "cbid.wireless.cfg033579.e_period": "1",
+        "cbi.apply": "Save & Apply"
+    }
+    # print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci//admin/wireless/wireless-security'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    # print("r.text:",r.text)
+    return r.text
+
+
+#4.wireless mac filtering
+def json_test_wireless_mac_filtering(sid):
+    payload = {
+        "cbi.submit": "1",
+        "tab.wireless.cfg033579": "macfilter",
+        "cbid.wireless.cfg033579.macfilter": "deny",
+        "cbid.wireless.cfg033579.maclist": "74:D4:35:CD:ED:AE",
+        "cbi.apply": "Save & Apply"
+    }
+    # print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/wireless/wireless-mac-filtering'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    # print("r.text:",r.text)
+    return r.text
+
+
+#5.Wireless Advanced
+def json_test_wireless_advanced(sid):
+    payload = {
+        "cbi.submit": "1",
+        "cbid.wireless.radio1.txpower": "20",
+        "cbid.wireless.radio1.beacon_int": "20000",
+        "cbi.cbe.wireless.radio1.short-gi": "1",
+        "cbid.wireless.cfg033579.rts": "250",
+        "cbid.wireless.cfg033579.frag": "250",
+        "cbid.wireless.cfg033579.dtim_period": "300",
+        "cbi.cbe.wireless.cfg033579.wmm": "1",
+        "cbid.wireless.cfg033579.wmm": "1",
+        "cbi.cbe.wireless.cfg033579.isolate": "1",
+        "cbid.wireless.cfg033579.isolate": "1",
+        "cbi.apply": "Save & Apply"
+    }
+    # print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/wireless/wireless-advanced'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    # print("r.text:",r.text)
+    return r.text
+
+#=================================================================================start from hear ---24.1.2017
+#6.wireless DHCP Settings
+def json_test_dhcp_setting(sid):
+    payload = (
+                    ("cbi.submit", "1"),
+                    ("proto", "dhcp"),
+                    ("start", "66.220.144.0"),
+                    ("limit", "66.220.159.255"),
+                    ("leasetime", "12h"),
+                    ("dhcp_option", "192.68.1.1"),
+                    ("domain","Facebook.com"),
+                    ("dns", '8.8.8.8'),
+                    ("dns", '1.2.3.4'),
+                    #"dns": "8.8.4.5",
+                    ("cbi.apply","Save & Apply")
+                    #"cbi.next": "Save"
+                 )
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci//admin/dhcp#section1'
+    # print("Connecting "+url+"...")Secondary DNS
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=payload)
+    #print("r.text:",r.text)
+    return r.text
+
+#7.DHCP Reservation Modify(wireless DHCP address reservation add new)
+def json_test_dhcp_address_reservation_add_new(sid):
+    payload = {
+        "cbi.submit": "1",
+        "cbid.dhcp.cfg07fe63.name": "BCPSC",
+        "cbid.dhcp.cfg07fe63.mac": "01:22:64:76:aa:18",
+        "cbid.dhcp.cfg07fe63.ip": "10.11.12.20",
+        "cbid.dhcp.cfg07fe63.hostid": "vpn",
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/dhcp/dhcp-address-reservation-add-new'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+#=============================================================start from hear ---26.1.2017
+#8.Add or Modify Port Forwarding Entry(Forwarding)
+def json_test_port_forwarding_add_new(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "name": "test5",
+        "proto": "icmp",
+        "src_dport": "9000",
+        "dest_port": "10000",
+        "ipaddr": "131.15.21.90",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/forwarding/port-forwarding-add-new'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+#=============================================================start from hear ---29.1.2017
+#9.Port Triggering(Forwarding)------------------need to talk with raihan vai for chake box value
+
+
+
+
+
+
+
+#10.Firewall Port Triggering ADD NEW(Forwarding)
+def json_test_forwarding_port_triggering_add_new(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "_trigger.name": "port_triggering",
+        "_trigger.port": "47624",
+        "_trigger.proto": "tcp",
+        "_trigger.src": "wan",
+        "_trigger.macaddr": "00:a0:24:5a:33:69",
+        "_trigger.ipaddr": "192.168.1.370",
+        "_trigger.extipaddr": "192.168.1.200",
+        "_trigger.extport": "2186",
+        "_incoming.dest": "wan",
+        "_trigger.inipaddr": "192.168.1.201",
+        "_incoming.port": "2300-2400",
+        "status": "0",
+        "commonport": "1",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/forwarding/forwarding-port-triggering-add-new'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+
+#=============================================================start from hear ---1.02.2017
+#11.Forwarding Virtual Servers Add New(Forwarding)
+def json_test_forwarding_virtual_servers_add_new(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "_service.port": "1723",
+        "_internal.port": "1723",
+        "_ip.addr": "139.130.4.5",
+        "_proto": "tcp",
+        "_status": "0",
+        "commonport": "gopher",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/forwarding/forwarding-virtual-servers-add-new'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+#12.DMZ(Forwarding)
+def json_test_dmz_forwarding(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "dmzstatus": "0",
+        "dmzipaddr": "1.2.3.4",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/forwarding#section4'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+#13.Basic Security(Security)--------------------------need to write pytest on 2.1.2017
+def json_test_basic_security(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "firewall": "1",
+        "ipsec": "1",
+        "tftp": "0",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci//admin/security#basic-security'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+#15.Advanced Security(Security)
+def json_test_advanced_security(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "dos": "0",
+        "synflood_rate1": "100",
+        "synflood_burst1": "100",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci//admin/security#advanced-security'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+#=============================================================start from hear ---2.02.2017
+
+#16.Remote Management(Security)
+def json_test_remote_management(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "port": "80",
+        "ipaddr": "255.255.255.255",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/security#advanced-security'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+#17.Site Filtering Add New(Security) #========================need to sit with raihan vai make api for it then pytest
+def json_test_site_filtering_add_new(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "filtering_src": "dfd.220.144.0",
+        "filtering_url_tokens": "dfsdfdsfsdfsdfdsf",
+        "filtering_access_status": "1",
+        "filtering_status": "1",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/security/site-filtering-add-new'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+#18.Content Filtering Add New(Security) #========================need to sit with raihan vai make api for it then pytest
+def json_test_content_filtering_add_new(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "banned_word": "aba",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/security/content-filtering-add-new'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+
+#19.Parental Control General switch(Parental Contro) #=========python do not save enable or disable 0/1,it only remove 1
+#  but gui can save 0/1
+def json_test_parental_control_general_switch(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "cbid.access_control.general.enabled": "1",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci//admin/parental_control'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+
+#=============================================================start from hear ---5.02.2017
+
+#20.Parental Contro Client Rules(Parental Contro)=======================need to sit with raihan vai for fix  it then pytest
+def json_test_parental_contro_client_rules(sid):
+    payload = {
+        # "cbi.submit": "1",
+        # "cbi.cbe.access_control.general.enabled":"1",
+        # "cbid.access_control.general.enabled": "1",
+        # "cbi.cbe.firewall.cfg2692bd.ac_enabled": "1",
+        # "cbid.firewall.cfg2692bd.ac_enabled": "1",
+        # "cbid.firewall.cfg2692bd.name": "rr1",
+        # "cbid.firewall.cfg2692bd.src_mac": "74:D4:35:CD:ED:AC",
+        # "cbid.firewall.cfg2692bd.start_time": "00:00",
+        # "cbid.firewall.cfg2692bd.stop_time": "23:59",
+        # "cbi.cbe.firewall.cfg2692bd.mon": "1",
+        # "cbi.cbe.firewall.cfg2692bd.tue": "1",
+        # "cbi.cbe.firewall.cfg2692bd.wed": "1",
+        # "cbi.cbe.firewall.cfg2692bd.thu": "1",
+        # "cbid.firewall.cfg2692bd.thu": "1",
+        # "cbi.cbe.firewall.cfg2692bd.fri": "1",
+        # "cbid.firewall.cfg2692bd.fri": "1",
+        # "cbi.cbe.firewall.cfg2692bd.sat": "1",
+        # "cbid.firewall.cfg2692bd.sat": "1",
+        # "cbi.cbe.firewall.cfg2692bd.sun": "1",
+        # "cbid.firewall.cfg2692bd.sun": "1",
+        #
+        # "cbi.apply": "Save & Apply"
+
+
+        "cbi.submit": "1",
+        "cbi.cbe.access_control.general.enabled" : "1",
+        "cbid.access_control.general.enabled" : "1",
+        "cbi.cbe.firewall.cfg2692bd.ac_enabled" : "1",
+        "cbid.firewall.cfg2692bd.ac_enabled" : "1",
+        "cbid.firewall.cfg2692bd.name": "rr1353535",
+        "cbid.firewall.cfg2692bd.src_mac" :"74:D4:35:CD:ED:AC" ,
+        "cbid.firewall.cfg2692bd.start_time" :"00:00",
+        "cbid.firewall.cfg2692bd.stop_time" : "23:59" ,
+        "cbi.cbe.firewall.cfg2692bd.mon" : "1",
+        "cbi.cbe.firewall.cfg2692bd.tue" : "1",
+        "cbi.cbe.firewall.cfg2692bd.wed" : "1",
+        "cbi.cbe.firewall.cfg2692bd.thu" : "1",
+        "cbid.firewall.cfg2692bd.thu" : "1",
+        "cbi.cbe.firewall.cfg2692bd.fri" : "1",
+        "cbid.firewall.cfg2692bd.fri" : "1",
+        "cbi.cbe.firewall.cfg2692bd.sat" : "1",
+        "cbid.firewall.cfg2692bd.sat" : "1",
+        "cbi.cbe.firewall.cfg2692bd.sun" : "1",
+        "cbid.firewall.cfg2692bd.sun" : "1",
+        "cbi.apply" : "Save & Apply"
+
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    #print(sid)
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci//admin/parental_control'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+#20.Rule(Access Control)
+def json_test_rule(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "status": "1",
+        "filter": "deny",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci//admin/access_control'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+
+#==============================================================================================================================
+                                         #start from hear ---6.02.2017
+#============================================================================================================================
+
+#21.Access Control Rule Entry(Access Control)=======================need to fix bug by raihan vai
+
+
+
+#22.Add or Modify a Host Entry(Access Control)
+def json_test_add_or_modify_a_host_entry(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "mode": "ip",
+        "name": "host_dis_ip",
+        "ip_start": "192.168",
+        "ip_end": "12.58",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/access_control/access-control-host-entry?wizard=1'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+#23.Add or Modify an Access Target Entry(Access Control)
+def json_test_add_or_modify_an_access_target_entry(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "mode": "ip",
+        "name": "target_dis_ip",
+        "ipaddr_start": "192.168",
+        "ipaddr_end": "78.47",
+        "port_start": "1",
+        "port_end": "20",
+        "proto": "udp",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/access_control/access-control-target-entry?wizard=1'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+#24.Advance Schedule Settings(Access Control)
+def json_test_advance_schedule_settings(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "name": "select_days",
+        "days-option": "selected",
+        "all-day": "on",
+        "start_time": "12:00",
+        "days[]": "sun",
+        # "port_end": "20",
+        # "proto": "udp",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/access_control/access-control-schedule-entry'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+
+#25.Email Notification Settings(Access Control)
+def json_test_email_notification_settings(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "notification_status": "1",
+        "email_address": "gollam.rabby@aplombtechbd.com",
+        "mode": "monthly",
+        #"month": "july",
+        "week_number": "2",
+        "weekday": "sunday",
+        "time": "05",
+        "time_mode": "pm",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/access_control#email'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+
+# ==============================================================================================================================
+                             # start from hear ---7.02.2017
+# ============================================================================================================================
+
+
+#26.Add or Modify a Static Route Entry(Advanced Routing)
+def json_test_add_or_modify_a_static_route_entry(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "target": "192.168.45.85",
+        "netmask": "255.0.0.0",
+        "gateway": "198.209.253.169",
+        "status": "disabled",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/advanced_routing/advanced-routing-static-routing-entry'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+#27.Binding Settings(Ip and Mac binding)
+def json_test_binding_settings(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "arb-binding": "0",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/ip_n_mac_binding#binding-settings'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+#28.IP & MAC Binding Settings(Ip and Mac binding)
+def json_test_ip_mac_binding_settings(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "bind": "0",
+        "macaddr": "21:54:QW:15:SD",
+        "ipaddr": "192.168.15.58",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/ip_n_mac_binding/ip-mac-binding-binding-settings-entry'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+
+
+#29.Find IP & MAC Binding Entry(Ip and Mac binding)========do not save data from GUI or Python
+def json_test_find_ip_and_mac_binding_entry(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "macaddr": "sssssssssssssssssssssssssssssssssssssssssssssss",
+        "ipaddr": "ddddddddddddddddddddddddddddddddddddddddddddddd",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/ip_n_mac_binding/ip-mac-binding-binding-settings-find'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+
+#30.MAC Clone(Ip and Mac binding)
+def json_test_mac_clone(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "wan-mac": "45:55:58:AD:45",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci//admin/ip_n_mac_binding#mac-clone'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+
+#31.General settings(System) &
+#32.Logging(System)
+#33.Language and Style(System)
+def json_test_logging_system(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "cbid.system.cfg02e48a.hostname": "OpenWrt",
+        "cbid.system.cfg02e48a.zonename": "UTC",
+        "cbid.system.cfg02e48a.log_size": "20",
+        "cbid.system.cfg02e48a.log_ip": "131.15.21.87",
+        "cbid.system.cfg02e48a.log_port": "515",
+        "cbid.system.cfg02e48a.log_proto": "udp",
+        "cbid.system.cfg02e48a.log_file": "/tmp/system.log",
+        "cbid.system.cfg02e48a.conloglevel": "7",
+        "cbid.system.cfg02e48a._lang": "auto",
+        "cbid.system.cfg02e48a._mediaurlbase": "/luci-static/sp.router",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/system/system'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+
+
+#34.Router Password(System-administration)
+def json_test_router_password(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "cbid.system._pass.pw1": "root1234",
+        "cbid.system._pass.pw2": "root1234",
+        "cbid.dropbear.cfg024dd4.Port": "20",
+        "cbid.dropbear.cfg024dd4.PasswordAuth": "on",
+        "cbid.dropbear.cfg024dd4.RootPasswordAuth": "on",
+        "cbid.dropbear.cfg024dd4.GatewayPorts": "off",
+        "cbid.dropbear._keys._data": "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAmLmwkzQDjEOW1Rj3TP5NldVDqUODVH9xuYrkeaSkxtdPJ8D9Hz+XAWnGAXdaIkCVOw2YEfHKWSo6befgNxiS+AKS+S+wM/bJpc4qOLe5ozFjZPNRHcw5O8WkgP5g/wg2BOvxBqSKpsSzvi4rYVRLtl7TLVMyajhELiJ9GqT8f25gr3jFmtuQQIkRES1aC4oL2tHsn529POfP1lPhh5tb2FbqEpm9L3779ljjkSX7mD4zza3zUckkuAIb5R7KSOrvPnJaEU903hrI0tx5omGyDy+h/2D1h0aqHanPcU9Ml91ZpMKdpa0+FeVgs2M3LHYTNnvZ76ScV2VtUQwm3YEvjw",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/system/admin'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+
+# ==============================================================================================================================
+                  # start from hear ---8.02.2017
+# ============================================================================================================================
+
+
+
+#39.LED Configuration(System-LED Configuration)
+def json_test_led_configuration(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "cbid.system.cfg058bba.name": "led",
+        "cbid.system.cfg058bba.sysfs": "rt2800soc-phy0::radio",
+        "cbid.system.cfg058bba.default": "0",
+        "cbid.system.cfg058bba.trigger": "timer",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/system/leds'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+
+#41.Dynamic DNS(Services)
+def json_test_dynamic_dns(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "cbid.ddns.myddns_ipv4.enabled": "1",
+        "cbid.ddns.myddns_ipv4.lookup_host": "hostname@example.com",
+        "cbid.ddns.myddns_ipv4.use_ipv6": "0",
+        "cbid.ddns.myddns_ipv4.ipv4_service_name": "-",
+        "cbid.ddns.myddns_ipv4.update_url": "www.customupdateurl.exa",
+        "cbid.ddns.myddns_ipv4.update_script": "custom update scripts",
+        "cbid.ddns.myddns_ipv4.domain": "domain@example.com",
+        "cbid.ddns.myddns_ipv4.username": "root",
+        "cbid.ddns.myddns_ipv4.password": "root1234",
+        "cbid.ddns.myddns_ipv4.param_enc": "option encoded parameter",
+        "cbid.ddns.myddns_ipv4.param_opt": "optional parameter",
+        "cbid.ddns.myddns_ipv4.ipv4_source": "network",
+        "cbid.ddns.myddns_ipv4.ipv4_network": "lan",
+        "cbid.ddns.myddns_ipv4.force_ipversion": "1",
+        "cbid.ddns.myddns_ipv4.proxy": "password@proxy.com",
+        "cbid.ddns.myddns_ipv4.use_syslog": "0",
+        "cbid.ddns.myddns_ipv4.use_logfile": "1",
+        "cbid.ddns.myddns_ipv4.check_interval": "15",
+        "cbid.ddns.myddns_ipv4.check_unit": "seconds",
+        "cbid.ddns.myddns_ipv4.force_interval": "minutes",
+        "cbid.ddns.myddns_ipv4.retry_count": "8",
+        "cbid.ddns.myddns_ipv4.retry_interval": "seconds",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/services/ddns/detail/myddns_ipv4'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+
+#45.Hostnames(network)
+def json_test_hostnames(sid):
+    payload = {
+        "cbi.submit": "1",
+
+        "cbid.dhcp.cfg09f37d.name": "host",
+        "cbid.dhcp.cfg09f37d.ip": "131.152.21.86",
+
+        "cbi.apply": "Save & Apply"
+    }
+    #print("yes")
+    #print("payload: ",urllib.urlencode(payload))
+    url = 'http://192.168.11.150' + ext_port + '/cgi-bin/luci/admin/network/hosts'
+    # print("Connecting "+url+"...")
+    headers = {'Cookie': 'sysauth=' + sid,
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+    r = requests.post(url, headers=headers, params=urllib.urlencode(payload))
+    #print("r.text:",r.text)
+    return r.text
+
+
+
+
+
+
+
+print("Trying to log in....")
+resp = json_test_login("root", "root1234")
+print("Login Done.")
+print("Trying to access wireless")
+
+# json_test_wireless_setting(resp["sid"]) #def test_wireless_settings():
+# json_test_wireless_security(resp["sid"])#def test_wireless_security():
+# json_test_wireless_mac_filtering(resp["sid"])#def test_wireless_mac_filtering():
+# json_test_wireless_advanced(resp["sid"])#def test_wireless_advanced():
+# json_test_dhcp_setting(resp["sid"])#def test_dhcp_setting():
+# json_test_dhcp_address_reservation_add_new(resp["sid"])#def test_dhcp_address_reservation_add_new():
+# json_test_port_forwarding_add_new(resp["sid"]) #def test_port_forwarding_add_new():
+# json_test_forwarding_port_triggering_add_new(resp["sid"]) #def test_forwarding_port_triggering_add_new():
+# json_test_forwarding_virtual_servers_add_new(resp["sid"])  #def test_forwarding_virtual_servers_add_new()
+# json_test_dmz_forwarding(resp["sid"]) #def test_dmz_forwarding():
+#json_test_basic_security(resp["sid"]) #========================================need to write pytest
+# json_test_advanced_security(resp["sid"]) #def test_advanced_security():
+# json_test_remote_management(resp["sid"]) #def test_remote_management():
+# json_test_site_filtering_add_new(resp["sid"]) #========================need to sit with raihan vai for where save it then pytest
+# json_test_content_filtering_add_new(resp["sid"]) #========================need to sit with raihan vai for where save it then pytest
+# json_test_parental_control_general_switch(resp["sid"])#===================need to write pytest
+# json_test_parental_contro_client_rules(resp["sid"])
+# json_test_rule(resp["sid"]) #============================def test_rule():
+# json_test_add_or_modify_a_host_entry(resp["sid"])
+# json_test_add_or_modify_an_access_target_entry(resp["sid"]) #========================def test_add_or_modify_an_access_target_entry():
+# json_test_advance_schedule_settings(resp["sid"]) #=====================def test_advance_schedule_settings():
+# json_test_email_notification_settings(resp["sid"])#====================def test_email_notification_settings():
+# json_test_add_or_modify_a_static_route_entry(resp["sid"]) #==============def test_add_or_modify_a_static_route_entry():
+# json_test_binding_settings(resp["sid"]) #===========================def test_binding_settings():
+# json_test_ip_mac_binding_settings(resp["sid"]) #====================def test_ip_mac_binding_settings():
+# json_test_find_ip_and_mac_binding_entry(resp["sid"]) #==================do not save data from GUI or Python
+
+#===================================================================================================
+# # this is stop because internate is stope for this
+#====================================================================================================
+
+# #json_test_mac_clone(resp["sid"])#====================def test_mac_clone():
+
+#===================================================================================================
+ #off because why router is down always
+#====================================================================================================
+
+# json_test_logging_system(resp["sid"]) #==============def test_logging_system():
+# json_test_router_password(resp["sid"])#==============def test_router_password():
+# json_test_led_configuration(resp["sid"])#==============def test_led_configuration():
+# json_test_dynamic_dns(resp["sid"])
+
+#========================================================================================================
+
+#json_test_hostnames(resp["sid"]) #=====================def test_hostnames():
+
+
+
+
+def pytest(config_file, config_value, parameter_with_section, expected_value):
+    global config_data
+    global config_file_name
+    ret=False
+    if len(config_data) < 1 or config_file_name != config_file:
+        config_data = json_test_getConfiguration("root", "root1234", config_file)
+    else:
+        config_file_name = config_file
+
+    if type(config_data["json"][config_value]) is list:
+        #print ("len: ",len(config_data["json"][config_value]))
+        #print ("json: ",config_data["json"][config_value])
+        #print ("json value: ", config_data["json"][config_value][0]["enabled"]==expected_value)
+        for index in range(len(config_data["json"][config_value])):
+            #print("===================", parameter_with_section in config_data["json"][config_value][index].keys())
+            # print("index: ", index)
+            # print("keys: ", config_data["json"][config_value][index].keys())
+            # print("enabled: ", parameter_with_section in config_data["json"][config_value][index].keys())
+            # print("find val: ", config_data["json"][config_value][index][parameter_with_section])
+            #print ("index>>>>", parameter_with_section in config_data["json"][config_value][index].keys() )
+            #print ("index type>>>>", type(parameter_with_section in config_data["json"][config_value][index].keys()) )
+            if parameter_with_section in config_data["json"][config_value][index].keys():
+                #print("arektu vitore////////////////////////////")
+                if type(config_data["json"][config_value][index][parameter_with_section]) is list:
+                    #print("ami khane........")
+                    for index1 in range(len(config_data["json"][config_value][index][parameter_with_section])):
+                        if config_data["json"][config_value][index][parameter_with_section][index1] == expected_value:
+                            #print ("expected_value: ",config_data["json"][config_value][index][parameter_with_section][index1])
+                            return True
+                        #else:
+                            #print ("expected_value: ", config_data["json"][config_value][index][parameter_with_section][index1])
+                            #print ("Shit!!!!!!!!!!!!!!!!!!")
+                else:
+                    #print("okkkkz+++++++++++++++++")
+                    #print("retrieve value: ",config_data["json"][config_value][index][parameter_with_section])
+                    if config_data["json"][config_value][index][parameter_with_section]==expected_value:
+                        #print("Yessss!!!!")
+                        return True
+                    else:
+                        #print("Shit... Second")
+                        ret=False
+    return ret
+
+#================================================================================
+#use for debug in python 2.7
+#================================================================================
+#pytest("dhcp", "dhcp", "proto", "dhcp")
+#pytest("wireless", "wifi-iface", "maclist", "74:D4:35:CD:ED:AE")
+#pytest("firewall", "redirect", "name", "test5")
+
+
+
+
+def test_wireless_settings():
+    assert (pytest("wireless", "wifi-iface", "ssid", "aplrouter_raihan") == True)
+    assert (pytest("wireless", "wifi-device", "country", "bd") == True)
+    assert (pytest("wireless", "wifi-device", "hwmode", "11g") == True)
+    assert (pytest("wireless", "wifi-device", "htmode", "auto") == True)
+    assert (pytest("wireless", "wifi-device", "channel", "9") == True)
+    #assert (pytest("wireless", "wifi-iface", "key", "root1234") == True)
+
+def test_wireless_security():
+    assert (pytest("wireless", "wifi-iface", "wireless_security", "personal") == True)
+    assert (pytest("wireless", "wifi-iface", "p_version", "automatic") == True)
+    assert (pytest("wireless", "wifi-iface", "p_encryption", "automatic") == True)
+    assert (pytest("wireless", "wifi-iface", "p_period", "0") == True)
+    assert (pytest("wireless", "wifi-iface", "radius_server_ip", "123456789") == True)
+    assert (pytest("wireless", "wifi-iface", "radius_port", "1813") == True)
+    assert (pytest("wireless", "wifi-iface", "radius_pass", "root1234") == True)
+    assert (pytest("wireless", "wifi-iface", "e_period", "1") == True)
+
+def test_wireless_mac_filtering():
+    assert (pytest("wireless", "wifi-iface", "macfilter", "deny") == True)
+    assert (pytest("wireless", "wifi-iface", "maclist", "74:D4:35:CD:ED:AE") == True)
+
+def test_wireless_advanced():
+      assert (pytest("wireless", "wifi-device", "txpower", "20") == True)
+      assert (pytest("wireless", "wifi-device", "beacon_int", "20000") == True)
+      assert (pytest("wireless", "wifi-iface", "dtim_period", "300") == True)
+      assert (pytest("wireless", "wifi-iface", "rts", "250") == True)
+      assert (pytest("wireless", "wifi-iface", "frag", "250") == True)
+      assert (pytest("wireless", "wifi-iface", "wmm", "1") == True)
+      assert (pytest("wireless", "wifi-iface", "isolate", "1") == True)
+
+#============================================================================================
+# dns found same name so it stop fast ,it need to fix on 26.1.2017---- done-----def test_dhcp_setting():
+#===============================================================================================
+
+def test_dhcp_setting():
+     assert (pytest("dhcp", "dhcp", "proto", "dhcp") == True)
+     assert (pytest("dhcp", "dhcp", "start", "66.220.144.0") == True)
+     assert (pytest("dhcp", "dhcp", "limit", "66.220.159.255") == True)
+     assert (pytest("dhcp", "dhcp", "leasetime", "12h") == True)
+     assert (pytest("dhcp", "dhcp", "dhcp_option", "192.68.1.1") == True)
+     assert (pytest("dhcp", "dhcp", "domain", "Facebook.com") == True)
+     assert (pytest("dhcp", "dhcp", "dns", "8.8.8.8") == True)
+     assert (pytest("dhcp", "dhcp", "dns", "1.2.3.4") == True)
+
+def test_dhcp_address_reservation_add_new():
+    assert (pytest("dhcp", "host", "ip", "10.11.12.20") == True)
+    assert (pytest("dhcp", "host", "hostid", "vpn") == True)
+    assert (pytest("dhcp", "host", "name", "BCPSC") == True)
+    assert (pytest("dhcp", "host", "mac", "01:22:64:76:aa:18") == True)
+
+
+def test_port_forwarding_add_new():
+    assert (pytest("firewall", "redirect", "name", "test5") == True)
+    assert (pytest("firewall", "redirect", "proto", "icmp") == True)
+    assert (pytest("firewall", "redirect", "src_dport", "9000") == True)
+    assert (pytest("firewall", "redirect", "dest_port", "10000") == True)
+    assert (pytest("firewall", "redirect", "ipaddr", "131.15.21.90") == True)
+
+
+def test_forwarding_port_triggering_add_new():
+    assert (pytest("firewall", "redirect", "module", "port_triggering") == True)
+    assert (pytest("firewall", "redirect", "proto", "tcp") == True)
+    assert (pytest("firewall", "redirect", "src_dport", "2186") == True)
+    assert (pytest("firewall", "redirect", "dest_ip", "192.168.1.201") == True)
+    assert (pytest("firewall", "redirect", "status", "0") == True)
+    assert (pytest("firewall", "redirect", "dest", "wan") == True)
+    assert (pytest("firewall", "redirect", "dest_port", "2300-2400") == True)
+    assert (pytest("firewall", "redirect", "src", "wan") == True)
+    assert (pytest("firewall", "redirect", "section", "redirect") == True)
+    assert (pytest("firewall", "redirect", "target", "DNAT") == True)
+    assert (pytest("firewall", "redirect", "src_dip", "192.168.1.200") == True)
+    assert (pytest("firewall", "redirect", "src_ip", "192.168.1.370") == True)
+    assert (pytest("firewall", "redirect", "src_mac", "00:a0:24:5a:33:69") == True)
+    assert (pytest("firewall", "redirect", "src_port", "47624") == True)
+
+def test_forwarding_virtual_servers_add_new():
+    assert (pytest("firewall", "redirect", "src_port", "1723") == True)
+    assert (pytest("firewall", "redirect", "dest_port", "1723") == True)
+    assert (pytest("firewall", "redirect", "src_ip", "139.130.4.5") == True)
+    assert (pytest("firewall", "redirect", "proto", "tcp") == True)
+    assert (pytest("firewall", "redirect", "status", "0") == True)
+    assert (pytest("firewall", "redirect", "module", "virtual_server") == True)
+
+def test_dmz_forwarding():
+    assert (pytest("firewall", "redirect", "enabled", "0") == True)
+    assert (pytest("firewall", "redirect", "dest_ip", "1.2.3.4") == True)
+
+# =========================nedd to write pytest on 2-2-2017
+# def test_basic_security():
+#     assert (pytest("firewall", "rule", "section", "rule") == True)
+#     assert (pytest("firewall", "rule", "name", "ah") == True)
+
+def test_advanced_security():
+    assert (pytest("firewall", "defaults", "synflood_protect", "1") == True)
+    assert (pytest("firewall", "defaults", "synflood_rate", "25") == True)
+    assert (pytest("firewall", "defaults", "synflood_burst", "50") == True)
+
+def test_remote_management():
+    assert (pytest("network", "interface", "ipaddr", "255.255.255.255") == True)
+    assert (pytest("uhttpd", "uhttpd", "listen_http", "0.0.0.0:80") == True)
+    assert (pytest("uhttpd", "uhttpd", "listen_http", "[::]:80") == True)
+
+#def test_site_filtering_add_new():
+
+#def test_content_filtering_add_new():
+
+#def test_parental_control_general_switch():
+    #assert (pytest("access_control", "access_control", "enabled ", "1") == True)
+
+#def test_parental_contro_client_rules():
+
+def test_rule():
+    assert (pytest("access_control", "rule", "status", "1") == True)
+    assert (pytest("access_control", "rule", "filter", "deny") == True)
+
+def test_add_or_modify_a_host_entry():
+    assert (pytest("access_control", "redirect", "mode", "ip") == True)
+    assert (pytest("access_control", "redirect", "name", "host_dis_ip") == True)
+    assert (pytest("access_control", "redirect", "ip_start", "192.168") == True)
+    assert (pytest("access_control", "redirect", "ip_end", "12.58") == True)
+
+def test_add_or_modify_an_access_target_entry():
+    assert (pytest("access_control", "redirect", "port_end", "20") == True)
+    assert (pytest("access_control", "redirect", "mode", "ip") == True)
+    assert (pytest("access_control", "redirect", "name", "target_dis_ip") == True)
+    assert (pytest("access_control", "redirect", "proto", "udp") == True)
+    assert (pytest("access_control", "redirect", "section", "target") == True)
+    assert (pytest("access_control", "redirect", "ipaddr_end", "78.47") == True)
+    assert (pytest("access_control", "redirect", "ipaddr_start", "192.168") == True)
+
+def test_advance_schedule_settings():
+    assert (pytest("access_control", "redirect", "time", "on") == True)
+    assert (pytest("access_control", "redirect", "days_option", "selected") == True)
+    assert (pytest("access_control", "redirect", "section", "schedule") == True)
+    assert (pytest("access_control", "redirect", "days", "sun") == True)
+
+def test_email_notification_settings():
+    assert (pytest("access_control", "access_control", "name", "email_settings") == True)
+    assert (pytest("access_control", "access_control", "section", "access_control") == True)
+    assert (pytest("access_control", "access_control", "email_address", "gollam.rabby@aplombtechbd.com") == True)
+    assert (pytest("access_control", "access_control", "time_mode", "pm") == True)
+    assert (pytest("access_control", "access_control", "notification_status", "1") == True)
+    assert (pytest("access_control", "access_control", "time", "05") == True)
+    assert (pytest("access_control", "access_control", "weekday", "sunday") == True)
+    assert (pytest("access_control", "access_control", "mode", "monthly") == True)
+    assert (pytest("access_control", "access_control", "week_number", "2") == True)
+    #assert (pytest("access_control", "access_control", "month", "july") == True)
+
+def test_add_or_modify_a_static_route_entry():
+    assert (pytest("network", "route", "target", "192.168.45.85") == True)
+    assert (pytest("network", "route", "name", "192.168.45.85") == True)
+    assert (pytest("network", "route", "netmask", "255.0.0.0") == True)
+    assert (pytest("network", "route", "gateway", "198.209.253.169") == True)
+    assert (pytest("network", "route", "metric", "0") == True)
+    assert (pytest("network", "route", "status", "disabled") == True)
+
+def test_binding_settings():
+    assert (pytest("dhcp", "arplist", "arb_binding", "0") == True)
+
+def test_ip_mac_binding_settings():
+    assert (pytest("dhcp", "host", "enabled", "0") == True)
+    assert (pytest("dhcp", "host", "mac", "21:54:QW:15:SD") == True)
+    assert (pytest("dhcp", "host", "ip", "192.168.15.58") == True)
+
+# def test_mac_clone():
+#     assert (pytest("wireless", "wifi-iface", "macaddr", "45:55:58:AD:45") == True)
+
+#===================================================================================================
+ #off because why router is down always
+#====================================================================================================
+
+# def test_logging_system():
+#     assert (pytest("system", "system", "zonename", "UTC") == True)
+#     assert (pytest("system", "system", "hostname", "OpenWrt") == True)
+#     assert (pytest("system", "system", "log_size", "20") == True)
+#     assert (pytest("system", "system", "log_ip", "131.15.21.87") == True)
+#     assert (pytest("system", "system", "log_port", "515") == True)
+#     assert (pytest("system", "system", "log_proto", "udp") == True)
+#     assert (pytest("system", "system", "log_file", "/tmp/system.log") == True)
+#     assert (pytest("system", "system", "conloglevel", "7") == True)
+#     assert (pytest("luci", "core", "lang", "auto") == True)
+#     assert (pytest("luci", "core", "mediaurlbase", "/luci-static/sp.router") == True)
+#
+# def test_router_password():
+#     assert (pytest("dropbear", "dropbear", "Port", "20") == True)
+
+# def test_led_configuration(): # ------------------------- Data is not save with out any table
+                                 # -------------------------if table is not there no value is set.
+
+#     assert (pytest("system", "led", "name", "led config") == True)
+#     assert (pytest("system", "led", "sysfs", "rt2800soc-phy0::radio") == True)
+#     assert (pytest("system", "led", "trigger", "timer") == True)
+
+#========================================================================================================
+
+def test_hostnames():
+    assert (pytest("dhcp", "domain", "name", "host") == True)
+    assert (pytest("dhcp", "domain", "ip", "131.152.21.86") == True)
